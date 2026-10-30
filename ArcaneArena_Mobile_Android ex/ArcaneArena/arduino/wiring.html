@@ -1,0 +1,93 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Arcane Arena Pad wiring</title>
+<style>body{margin:0;background:#fff;font-family:Segoe UI,Arial,sans-serif}</style></head><body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" width="1100" height="720" font-family="Segoe UI,Arial,sans-serif">
+  <rect width="1100" height="720" fill="#fff"/>
+  <text x="550" y="34" text-anchor="middle" font-size="24" font-weight="700" fill="#1c2340">ARCANE ARENA PAD — Arduino Uno + HC-05 + 10 buttons</text>
+
+  <!-- Arduino board -->
+  <rect x="380" y="120" width="300" height="470" rx="14" fill="#0b6e8c" stroke="#064457" stroke-width="3"/>
+  <text x="530" y="355" text-anchor="middle" font-size="26" font-weight="700" fill="#fff">ARDUINO</text>
+  <text x="530" y="385" text-anchor="middle" font-size="26" font-weight="700" fill="#fff">UNO</text>
+  <rect x="490" y="560" width="80" height="40" fill="#bbb" stroke="#777"/><text x="530" y="585" text-anchor="middle" font-size="12">USB → PC</text>
+
+  <!-- right header: digital pins -->
+  <g font-size="14" fill="#fff" font-weight="600">
+    <text x="660" y="160" text-anchor="end">D2</text><text x="660" y="195" text-anchor="end">D3</text>
+    <text x="660" y="230" text-anchor="end">D4</text><text x="660" y="265" text-anchor="end">D5</text>
+    <text x="660" y="300" text-anchor="end">D6</text><text x="660" y="335" text-anchor="end">D7</text>
+    <text x="660" y="370" text-anchor="end">D8</text><text x="660" y="405" text-anchor="end">D9</text>
+    <text x="660" y="455" text-anchor="end">D10</text><text x="660" y="490" text-anchor="end">D11</text>
+  </g>
+  <!-- left header: power + analog -->
+  <g font-size="14" fill="#fff" font-weight="600">
+    <text x="400" y="160">5V</text><text x="400" y="195">GND</text>
+    <text x="400" y="300">A0</text><text x="400" y="335">A1</text>
+  </g>
+
+  <!-- buttons on the right -->
+  <g id="btns">
+    <!-- each: wire from pin to button, button to GND rail at x=1000 -->
+    <g stroke="#e0a100" stroke-width="3">
+      <line x1="680" y1="155" x2="820" y2="155"/><line x1="680" y1="190" x2="820" y2="190"/>
+      <line x1="680" y1="225" x2="820" y2="225"/><line x1="680" y1="260" x2="820" y2="260"/>
+      <line x1="680" y1="295" x2="820" y2="295"/><line x1="680" y1="330" x2="820" y2="330"/>
+      <line x1="680" y1="365" x2="820" y2="365"/><line x1="680" y1="400" x2="820" y2="400"/>
+    </g>
+    <g stroke="#222" stroke-width="3">
+      <line x1="880" y1="155" x2="1000" y2="155"/><line x1="880" y1="190" x2="1000" y2="190"/>
+      <line x1="880" y1="225" x2="1000" y2="225"/><line x1="880" y1="260" x2="1000" y2="260"/>
+      <line x1="880" y1="295" x2="1000" y2="295"/><line x1="880" y1="330" x2="1000" y2="330"/>
+      <line x1="880" y1="365" x2="1000" y2="365"/><line x1="880" y1="400" x2="1000" y2="400"/>
+      <line x1="1000" y1="140" x2="1000" y2="660"/>
+    </g>
+    <g fill="#f4f4f4" stroke="#333" stroke-width="2">
+      <rect x="820" y="141" width="60" height="28" rx="5"/><rect x="820" y="176" width="60" height="28" rx="5"/>
+      <rect x="820" y="211" width="60" height="28" rx="5"/><rect x="820" y="246" width="60" height="28" rx="5"/>
+      <rect x="820" y="281" width="60" height="28" rx="5"/><rect x="820" y="316" width="60" height="28" rx="5"/>
+      <rect x="820" y="351" width="60" height="28" rx="5"/><rect x="820" y="386" width="60" height="28" rx="5"/>
+    </g>
+    <g font-size="12" font-weight="700" text-anchor="middle" fill="#1c2340">
+      <text x="850" y="160">UP</text><text x="850" y="195">DOWN</text><text x="850" y="230">LEFT</text><text x="850" y="265">RIGHT</text>
+      <text x="850" y="300">ATTACK</text><text x="850" y="335">SKILL 1</text><text x="850" y="370">SKILL 2</text><text x="850" y="405">DASH</text>
+    </g>
+    <text x="1010" y="130" font-size="13" font-weight="700" fill="#222">GND</text>
+  </g>
+
+  <!-- A0 / A1 buttons on the left -->
+  <g stroke="#e0a100" stroke-width="3"><line x1="380" y1="295" x2="260" y2="295"/><line x1="380" y1="330" x2="260" y2="330"/></g>
+  <g stroke="#222" stroke-width="3"><line x1="200" y1="295" x2="40" y2="295"/><line x1="200" y1="330" x2="40" y2="330"/><line x1="40" y1="190" x2="40" y2="660"/><line x1="40" y1="190" x2="380" y2="190"/></g>
+  <g fill="#f4f4f4" stroke="#333" stroke-width="2"><rect x="200" y="281" width="60" height="28" rx="5"/><rect x="200" y="316" width="60" height="28" rx="5"/></g>
+  <g font-size="12" font-weight="700" text-anchor="middle" fill="#1c2340"><text x="230" y="300">SWAP</text><text x="230" y="335">PAUSE</text></g>
+  <line x1="40" y1="660" x2="1000" y2="660" stroke="#222" stroke-width="3"/>
+  <text x="560" y="685" text-anchor="middle" font-size="13" fill="#222">common GND rail (black) — every button's other leg goes here</text>
+
+  <!-- HC-05 -->
+  <rect x="740" y="470" width="190" height="120" rx="8" fill="#1d5fd1" stroke="#0d3b8a" stroke-width="3"/>
+  <text x="835" y="500" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">HC-05</text>
+  <g font-size="12" fill="#fff" font-weight="600"><text x="760" y="525">VCC</text><text x="760" y="545">GND</text><text x="760" y="565">TXD</text><text x="760" y="585">RXD</text></g>
+  <!-- TXD -> D10 -->
+  <polyline points="740,561 710,561 710,450 680,450" fill="none" stroke="#2e9e44" stroke-width="3"/>
+  <!-- D11 -> divider -> RXD -->
+  <polyline points="680,485 700,485 700,600" fill="none" stroke="#8e44ad" stroke-width="3"/>
+  <rect x="690" y="600" width="20" height="30" fill="#d9b36c" stroke="#333"/><text x="645" y="620" font-size="12" font-weight="700">1 kΩ</text>
+  <polyline points="700,630 700,640 735,640 735,581 740,581" fill="none" stroke="#8e44ad" stroke-width="3"/>
+  <rect x="725" y="640" width="20" height="0" />
+  <line x1="735" y1="640" x2="735" y2="645" stroke="#8e44ad" stroke-width="3"/>
+  <rect x="760" y="610" width="30" height="20" fill="#d9b36c" stroke="#333" transform="rotate(0)"/>
+  <line x1="735" y1="620" x2="760" y2="620" stroke="#8e44ad" stroke-width="3"/>
+  <line x1="790" y1="620" x2="820" y2="620" stroke="#222" stroke-width="3"/><line x1="820" y1="620" x2="820" y2="660" stroke="#222" stroke-width="3"/>
+  <text x="775" y="645" text-anchor="middle" font-size="12" font-weight="700">2 kΩ</text>
+  <!-- VCC/GND -->
+  <polyline points="930,521 960,521 960,110 395,110 395,145" fill="none" stroke="#d62828" stroke-width="3"/>
+  <polyline points="930,541 975,541 975,660" fill="none" stroke="#222" stroke-width="3"/>
+  <text x="680" y="104" font-size="12" fill="#d62828" font-weight="700">5V → HC-05 VCC</text>
+
+  <!-- legend -->
+  <g font-size="13">
+    <text x="55" y="430" font-weight="700" fill="#1c2340">Notes</text>
+    <text x="55" y="455">• Buttons: one leg to the pin,</text><text x="55" y="473">  other leg to GND (no resistor,</text><text x="55" y="491">  INPUT_PULLUP is used).</text>
+    <text x="55" y="516">• HC-05 TXD → D10 directly.</text>
+    <text x="55" y="541">• D11 → 1 kΩ → HC-05 RXD,</text><text x="55" y="559">  RXD → 2 kΩ → GND (5V→3.3V).</text>
+    <text x="55" y="584">• Pair HC-05 on the phone:</text><text x="55" y="602">  PIN 1234 (or 0000).</text>
+  </g>
+</svg></body></html>

@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Arcane Arena</title>
+<style>
+  :root{--bg:#0b0d17;--panel:rgba(14,18,34,.92);--line:#2b3358;--txt:#e8ecff;--dim:#8d96c4;--gold:#ffd166;--red:#ff5d73;--blue:#4da3ff;--green:#4fdc7a;--purple:#c06bff}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:none}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+  #game{position:fixed;inset:0;width:100vw;height:100vh;display:block}
+  .hidden{display:none!important}
+
+  /* ---------- touch controls (mobile) ---------- */
+  #touch{position:fixed;inset:0;pointer-events:none}
+  #joyZone{position:absolute;left:0;bottom:0;width:45%;height:70%;pointer-events:auto}
+  #joyBase{position:absolute;width:130px;height:130px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);transform:translate(-50%,-50%);display:none}
+  #joyKnob{position:absolute;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.35);transform:translate(-50%,-50%);display:none}
+  .tbtn{position:absolute;pointer-events:auto;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(20,26,50,.6);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:12px;overflow:hidden}
+  .tbtn .ico{font-size:22px;line-height:1}
+  .tbtn.on{background:rgba(120,140,255,.55)}
+  .tbtn .cd{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);height:0%}
+  #bAtk{right:6%;bottom:12%;width:92px;height:92px;border-color:var(--gold)}
+  #bS1{right:calc(6% + 100px);bottom:8%;width:64px;height:64px;border-color:var(--blue)}
+  #bS2{right:calc(6% + 78px);bottom:calc(12% + 88px);width:64px;height:64px;border-color:var(--purple)}
+  #bDash{right:4%;bottom:calc(12% + 104px);width:60px;height:60px;border-color:var(--green)}
+  #bSwap{right:calc(6% + 176px);bottom:5%;width:52px;height:52px}
+  #bPause{right:12px;top:12px;width:44px;height:44px;border-radius:10px}
+
+  /* ---------- top bar buttons ---------- */
+  #topBtns{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:5}
+  .pill{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
+  .pill.ok{border-color:var(--green);color:var(--green)}
+
+  /* ---------- hardware legend window ---------- */
+  #legend{position:fixed;left:50%;bottom:4px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px 8px;display:flex;gap:4px;align-items:center;z-index:6;max-width:98vw;flex-wrap:wrap;justify-content:center}
+  #legend .ttl{font-size:11px;color:var(--green);font-weight:700;margin-right:4px;white-space:nowrap}
+  .lk{display:flex;align-items:center;gap:3px;font-size:10px;background:#151a33;border:1px solid var(--line);border-radius:7px;padding:3px 6px;white-space:nowrap}
+  .lk b{color:var(--gold);font-size:10px}
+  .lk i{width:8px;height:8px;border-radius:50%;background:#333a5c;display:inline-block}
+  .lk.on{border-color:var(--gold)} .lk.on i{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+
+  /* ---------- overlays ---------- */
+  .ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,7,15,.78);z-index:10;padding:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 22px;max-width:760px;width:100%;max-height:96vh;overflow:auto;text-align:center}
+  h1{margin:0 0 4px;font-size:30px;letter-spacing:2px;background:linear-gradient(90deg,var(--gold),var(--purple),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h2{margin:0 0 10px}
+  .sub{color:var(--dim);font-size:13px;margin-bottom:12px}
+  .party{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+  .pc{flex:1;min-width:150px;max-width:220px;border:2px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;background:#121731;text-align:left}
+  .pc.sel{border-color:var(--gold);box-shadow:0 0 14px rgba(255,209,102,.3)}
+  .pc h3{margin:0 0 4px;font-size:16px}
+  .pc p{margin:2px 0;font-size:11px;color:var(--dim)}
+  .big{background:linear-gradient(90deg,#ffb347,#ff6b6b);border:none;color:#1a0f00;font-weight:800;font-size:18px;padding:12px 34px;border-radius:12px;cursor:pointer;margin:8px 4px}
+  .sec{background:#1b2244;border:1px solid var(--line);color:var(--txt);font-weight:600;font-size:14px;padding:10px 18px;border-radius:10px;cursor:pointer;margin:6px 4px}
+  .hint{font-size:12px;color:var(--dim);margin-top:8px;line-height:1.5}
+  #devList button{display:block;width:100%;margin:6px 0;text-align:left}
+  kbd{background:#1b2244;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:11px}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="topBtns">
+  <button class="pill" id="connBtn">🔌 Connect</button>
+</div>
+
+<!-- Touch controls (mobile only, hidden when Arduino connected) -->
+<div id="touch" class="hidden">
+  <div id="joyZone"></div>
+  <div id="joyBase"></div><div id="joyKnob"></div>
+  <div class="tbtn" id="bAtk" data-k="attack"><span class="ico">⚔️</span>ATK<div class="cd"></div></div>
+  <div class="tbtn" id="bS1" data-k="s1"><span class="ico" id="icoS1">✨</span><div class="cd"></div></div>
+  <div class="tbtn" id="bS2" data-k="s2"><span class="ico" id="icoS2">🔥</span><div class="cd"></div></div>
+  <div class="tbtn" id="bDash" data-k="dash"><span class="ico">💨</span><div class="cd"></div></div>
+  <div class="tbtn" id="bSwap" data-k="swap"><span class="ico">🔄</span></div>
+  <div class="tbtn" id="bPause" data-k="pause"><span class="ico">⏸</span></div>
+</div>
+
+<!-- Small window at the bottom: which Arduino button does what -->
+<div id="legend" class="hidden"></div>
+
+<!-- Title -->
+<div class="ov" id="ovTitle">
+  <div class="card">
+    <h1>ARCANE ARENA</h1>
+    <div class="sub">Fight waves of bots with a party of 3 heroes. Swap heroes anytime — resting heroes heal.</div>
+    <div class="party" id="partyCards"></div>
+    <button class="big" id="playBtn">▶ PLAY</button>
+    <div class="hint" id="titleHint"></div>
+  </div>
+</div>
+
+<!-- Pause -->
+<div class="ov hidden" id="ovPause">
+  <div class="card"><h2>⏸ Paused</h2>
+    <button class="big" id="resumeBtn">▶ Resume</button><br>
+    <button class="sec" id="quitBtn">Quit to menu</button>
+    <div class="hint">Arduino: <b>ATTACK</b> = resume · <b>PAUSE</b> = resume</div>
+  </div>
+</div>
+
+<!-- Game over -->
+<div class="ov hidden" id="ovOver">
+  <div class="card"><h2 id="overTitle">💀 Party defeated</h2>
+    <div class="sub" id="overStats"></div>
+    <button class="big" id="againBtn">↻ Play again</button>
+    <div class="hint">Arduino: press <b>ATTACK</b> to play again</div>
+  </div>
+</div>
+
+<!-- Device picker (mobile / Bluetooth) -->
+<div class="ov hidden" id="ovDev">
+  <div class="card"><h2>📶 Choose your HC-05</h2>
+    <div class="sub">Only paired devices are listed. Pair the HC-05 first in Android Settings → Bluetooth (PIN 1234 or 0000).</div>
+    <div id="devList"></div>
+    <button class="sec" id="devRefresh">↻ Refresh</button>
+    <button class="sec" id="devClose">Cancel</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =========================================================
+   PLATFORM is set by the build: 'mobile' (Android + HC-05
+   Bluetooth) or 'pc' (keyboard + Arduino over USB cable).
+   ========================================================= */
+const PLATFORM = 'mobile';
+
+/* ---------------- canvas ---------------- */
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+let VW = 0, VH = 0, DPR = 1, ZOOM = 1;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  VW = window.innerWidth; VH = window.innerHeight;
+  cv.width = VW * DPR; cv.height = VH * DPR;
+  // show roughly 1000x600 world units regardless of screen size
+  ZOOM = Math.min(VW / 1000, VH / 600);
+  ZOOM = Math.max(0.45, Math.min(ZOOM, 1.6));
+}
+window.addEventListener('resize', resize); resize();
+
+/* ---------------- helpers ---------------- */
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const ang = (a, b) => Math.atan2(b.y - a.y, b.x - a.x);
+const WORLD = { w: 2200, h: 1500 };
+
+/* =========================================================
+   INPUT  — merged from keyboard, touch, and hardware pad
+   Bit order shared with the Arduino sketch:
+   0 UP 1 DOWN 2 LEFT 3 RIGHT 4 ATTACK 5 SKILL1 6 SKILL2 7 DASH 8 SWAP 9 PAUSE
+   ========================================================= */
+const KEYS = ['up', 'down', 'left', 'right', 'attack', 's1', 's2', 'dash', 'swap', 'pause'];
+const kb = {}, touch = {}, hw = {};
+let joy = { x: 0, y: 0 };
+let hwConnected = false, hwName = '';
+let prevIn = {};
+function readInput() {
+  const i = {};
+  for (const k of KEYS) i[k] = !!(kb[k] || touch[k] || hw[k]);
+  let mx = 0, my = 0;
+  if (i.left) mx -= 1; if (i.right) mx += 1; if (i.up) my -= 1; if (i.down) my += 1;
+  if (!hwConnected && (joy.x || joy.y)) { mx = joy.x; my = joy.y; }
+  const m = Math.hypot(mx, my); if (m > 1) { mx /= m; my /= m; }
+  i.mx = mx; i.my = my;
+  i.pressed = {};
+  for (const k of KEYS) i.pressed[k] = i[k] && !prevIn[k];
+  prevIn = {}; for (const k of KEYS) prevIn[k] = i[k];
+  return i;
+}
+
+/* keyboard (PC; also works on mobile with a BT keyboard) */
+const KEYMAP = {
+  KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
+  KeyJ: 'attack', KeyK: 's1', KeyL: 's2', Space: 'dash', ShiftLeft: 'dash', KeyQ: 'swap', KeyP: 'pause', Escape: 'pause', Enter: 'attack'
+};
+addEventListener('keydown', e => { const k = KEYMAP[e.code]; if (k) { kb[k] = true; e.preventDefault(); } });
+addEventListener('keyup', e => { const k = KEYMAP[e.code]; if (k) { kb[k] = false; e.preventDefault(); } });
+addEventListener('blur', () => { for (const k in kb) kb[k] = false; });
+
+/* touch joystick + buttons */
+const elTouch = document.getElementById('touch');
+(function setupTouch() {
+  const zone = document.getElementById('joyZone'), base = document.getElementById('joyBase'), knob = document.getElementById('joyKnob');
+  let jid = null, bx = 0, by = 0; const R = 55;
+  zone.addEventListener('pointerdown', e => {
+    jid = e.pointerId; bx = e.clientX; by = e.clientY; zone.setPointerCapture(jid);
+    base.style.display = knob.style.display = 'block';
+    base.style.left = knob.style.left = bx + 'px'; base.style.top = knob.style.top = by + 'px';
+  });
+  zone.addEventListener('pointermove', e => {
+    if (e.pointerId !== jid) return;
+    let dx = e.clientX - bx, dy = e.clientY - by; const m = Math.hypot(dx, dy);
+    if (m > R) { dx = dx / m * R; dy = dy / m * R; }
+    knob.style.left = (bx + dx) + 'px'; knob.style.top = (by + dy) + 'px';
+    joy.x = Math.abs(dx) > 6 ? dx / R : 0; joy.y = Math.abs(dy) > 6 ? dy / R : 0;
+  });
+  const end = e => { if (e.pointerId !== jid) return; jid = null; joy.x = joy.y = 0; base.style.display = knob.style.display = 'none'; };
+  zone.addEventListener('pointerup', end); zone.addEventListener('pointercancel', end);
+  document.querySelectorAll('.tbtn').forEach(b => {
+    const k = b.dataset.k;
+    b.addEventListener('pointerdown', e => { touch[k] = true; b.classList.add('on'); b.setPointerCapture(e.pointerId); e.preventDefault(); });
+    const up = () => { touch[k] = false; b.classList.remove('on'); };
+    b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('lostpointercapture', up);
+  });
+})();
+
+/* =========================================================
+   HARDWARE PAD  — Arduino sends lines like "S:01A\n"
+   (hex bitmask of pressed buttons) on change + every 100 ms
+   ========================================================= */
+let rxBuf = '', lastHw = 0;
+function hwData(txt) {
+  rxBuf += txt;
+  let idx;
+  while ((idx = rxBuf.indexOf('\n')) >= 0) {
+    const line = rxBuf.slice(0, idx).trim(); rxBuf = rxBuf.slice(idx + 1);
+    if (line.startsWith('S:')) {
+      const v = parseInt(line.slice(2), 16);
+      if (!isNaN(v)) { KEYS.forEach((k, b) => hw[k] = !!(v & (1 << b))); lastHw = performance.now(); updateLegendLights(); }
+    }
+  }
+  if (rxBuf.length > 200) rxBuf = '';
+}
+function setHwConnected(on, name) {
+  hwConnected = on; hwName = name || '';
+  if (!on) for (const k of KEYS) hw[k] = false;
+  const btn = document.getElementById('connBtn');
+  btn.textContent = on ? ('✅ ' + (PLATFORM === 'pc' ? 'USB' : 'BT') + ': ' + (hwName || 'Arduino') + ' (tap to disconnect)') : '🔌 Connect Arduino';
+  btn.classList.toggle('ok', on);
+  // controls disappear when the Arduino is connected, legend window appears
+  elTouch.classList.toggle('hidden', !(PLATFORM === 'mobile' && !on));
+  document.getElementById('legend').classList.toggle('hidden', !on);
+  if (on) toast((PLATFORM === 'pc' ? 'USB' : 'Bluetooth') + ' controller connected', '#4fdc7a');
+}
+const LEGEND = [
+  ['up', 'D2', '▲ Up'], ['down', 'D3', '▼ Down'], ['left', 'D4', '◀ Left'], ['right', 'D5', '▶ Right'],
+  ['attack', 'D6', '⚔ Attack / OK'], ['s1', 'D7', '✨ Skill 1'], ['s2', 'D8', '🔥 Skill 2'],
+  ['dash', 'D9', '💨 Dash'], ['swap', 'A0', '🔄 Swap hero'], ['pause', 'A1', '⏸ Pause']
+];
+(function buildLegend() {
+  const el = document.getElementById('legend');
+  el.innerHTML = '<span class="ttl">🎮 ARDUINO</span>' + LEGEND.map(([k, pin, lbl]) => `<span class="lk" id="lk_${k}"><i></i><b>${pin}</b>${lbl}</span>`).join('');
+})();
+function updateLegendLights() { for (const [k] of LEGEND) document.getElementById('lk_' + k).classList.toggle('on', !!hw[k]); }
+
+/* ---- Bluetooth (Android app bridge: window.AndroidBT) ---- */
+window.onBTData = s => hwData(s);
+window.onBTStatus = (st, name) => {
+  if (st === 'connected') { setHwConnected(true, name); hideOv('ovDev'); }
+  else if (st === 'connecting') toast('Connecting to ' + name + '…', '#ffd166');
+  else if (st === 'error') { setHwConnected(false); toast('Bluetooth: ' + name, '#ff5d73'); }
+  else if (st === 'disconnected') { if (hwConnected) toast('Arduino disconnected — touch controls back', '#ff5d73'); setHwConnected(false); }
+};
+function btListDevices() {
+  const list = document.getElementById('devList');
+  if (!window.AndroidBT) { list.innerHTML = '<div class="sub">Bluetooth only works inside the installed Android app.</div>'; return; }
+  let devs = [];
+  try { devs = JSON.parse(AndroidBT.listPaired()); } catch (e) { }
+  if (devs.error) { list.innerHTML = `<div class="sub">${devs.error}</div>`; return; }
+  if (!devs.length) { list.innerHTML = '<div class="sub">No paired devices. Pair HC-05 in Android Bluetooth settings first.</div>'; return; }
+  devs.sort((a, b) => (/hc|ard/i.test(b.name) ? 1 : 0) - (/hc|ard/i.test(a.name) ? 1 : 0));
+  list.innerHTML = '';
+  devs.forEach(d => {
+    const b = document.createElement('button'); b.className = 'sec';
+    b.textContent = (/hc-?0[56]/i.test(d.name) ? '⭐ ' : '') + d.name + '  —  ' + d.address;
+    b.onclick = () => AndroidBT.connect(d.address, d.name);
+    list.appendChild(b);
+  });
+}
+
+/* ---- USB (PC: Web Serial API in Chrome / Edge) ---- */
+let serialPort = null, serialReader = null;
+async function usbConnect() {
+  if (!('serial' in navigator)) { toast('Open this file in Google Chrome or Microsoft Edge for USB', '#ff5d73'); return; }
+  try {
+    serialPort = await navigator.serial.requestPort();
+    await serialPort.open({ baudRate: 115200 });
+    setHwConnected(true, 'Arduino Uno');
+    const dec = new TextDecoderStream();
+    serialPort.readable.pipeTo(dec.writable).catch(() => { });
+    serialReader = dec.readable.getReader();
+    while (true) {
+      const { value, done } = await serialReader.read();
+      if (done) break;
+      if (value) hwData(value);
+    }
+  } catch (e) { if (e && e.name !== 'NotFoundError') toast('USB: ' + e.message, '#ff5d73'); }
+  if (hwConnected) { setHwConnected(false); toast('USB disconnected', '#ff5d73'); }
+}
+async function usbDisconnect() {
+  try { if (serialReader) await serialReader.cancel(); } catch (e) { }
+  try { if (serialPort) await serialPort.close(); } catch (e) { }
+  serialPort = null; serialReader = null; setHwConnected(false);
+}
+if ('serial' in navigator) navigator.serial.addEventListener('disconnect', () => { if (hwConnected) usbDisconnect(); });
+
+document.getElementById('connBtn').onclick = () => {
+  if (PLATFORM === 'pc') { hwConnected ? usbDisconnect() : usbConnect(); }
+  else {
+    if (hwConnected) { window.AndroidBT && AndroidBT.disconnect(); setHwConnected(false); }
+    else { showOv('ovDev'); btListDevices(); }
+  }
+};
+document.getElementById('devRefresh').onclick = btListDevices;
+document.getElementById('devClose').onclick = () => hideOv('ovDev');
+
+/* =========================================================
+   GAME DATA
+   ========================================================= */
+const CLASSES = {
+  knight: {
+    name: 'Knight', color: '#4da3ff', icon: '🛡️', hp: 240, mp: 80, mpRegen: 7, speed: 200, armor: 0.3, atkCd: 0.42,
+    s1: { name: 'Whirlwind', icon: '🌀', cd: 4, mp: 25 }, s2: { name: 'Earthquake', icon: '🌋', cd: 9, mp: 45 }, dash: { name: 'Charge', cd: 2.4 },
+    desc: 'Tank. Sword slash, spinning Whirlwind, Earthquake stuns everything nearby, Charge hits enemies on the way.'
+  },
+  mage: {
+    name: 'Mage', color: '#c06bff', icon: '🔮', hp: 140, mp: 170, mpRegen: 14, speed: 185, armor: 0, atkCd: 0.36,
+    s1: { name: 'Frost Nova', icon: '❄️', cd: 5, mp: 30 }, s2: { name: 'Meteor', icon: '☄️', cd: 10, mp: 60 }, dash: { name: 'Blink', cd: 2.6 },
+    desc: 'Magic. Arcane bolts, Frost Nova freezes & slows, Meteor crushes groups, Blink teleports.'
+  },
+  ranger: {
+    name: 'Ranger', color: '#4fdc7a', icon: '🏹', hp: 170, mp: 110, mpRegen: 10, speed: 230, armor: 0.1, atkCd: 0.27,
+    s1: { name: 'Multishot', icon: '🎯', cd: 3.5, mp: 20 }, s2: { name: 'Arrow Rain', icon: '🌧️', cd: 9, mp: 50 }, dash: { name: 'Roll', cd: 1.6 },
+    desc: 'Mobile. Fast arrows, 7-arrow Multishot, Arrow Rain zone, invulnerable Roll.'
+  }
+};
+const ORDER = ['knight', 'mage', 'ranger'];
+
+/* ---------------- state ---------------- */
+let state = 'title'; // title | play | pause | over
+let party = [], active = 0, startChar = 'knight';
+let enemies = [], projs = [], zones = [], parts = [], texts = [], drops = [], slashes = [];
+let wave = 0, waveTimer = 0, kills = 0, score = 0, level = 1, xp = 0, xpNext = 60, swapCd = 0;
+let shake = 0, banner = null, cam = { x: 0, y: 0 }, time = 0;
+
+function makeHero(key) {
+  const c = CLASSES[key];
+  return {
+    key, c, x: WORLD.w / 2, y: WORLD.h / 2, r: 18, hp: c.hp, maxHp: c.hp, mp: c.mp, maxMp: c.mp,
+    face: 0, atkT: 0, cd: { s1: 0, s2: 0, dash: 0 }, inv: 0, dashT: 0, dvx: 0, dvy: 0, spinT: 0, spinTick: 0, dead: false, hitFlash: 0, walk: 0
+  };
+}
+function dmgMul() { return 1 + (level - 1) * 0.12; }
+const hero = () => party[active];
+
+function newGame() {
+  party = ORDER.map(makeHero);
+  active = ORDER.indexOf(startChar);
+  enemies = []; projs = []; zones = []; parts = []; texts = []; drops = []; slashes = [];
+  wave = 0; waveTimer = 1.2; kills = 0; score = 0; level = 1; xp = 0; xpNext = 60; swapCd = 0;
+  state = 'play';
+  hideOv('ovTitle'); hideOv('ovOver'); hideOv('ovPause');
+}
+
+/* ---------------- enemies ---------------- */
+const ETYPES = {
+  grunt: { hp: 60, speed: 125, r: 16, color: '#ff5d73', dmg: 12, xp: 8 },
+  shooter: { hp: 45, speed: 105, r: 15, color: '#ff9f43', dmg: 10, xp: 10 },
+  caster: { hp: 75, speed: 80, r: 16, color: '#f368e0', dmg: 26, xp: 14 },
+  brute: { hp: 220, speed: 80, r: 26, color: '#b33939', dmg: 26, xp: 25 },
+  boss: { hp: 1400, speed: 70, r: 46, color: '#ffd166', dmg: 30, xp: 150 }
+};
+function spawnEnemy(type, x, y) {
+  const t = ETYPES[type], sc = 1 + 0.13 * (wave - 1);
+  if (x === undefined) {
+    const h = hero(); let tries = 0;
+    do { x = rand(60, WORLD.w - 60); y = rand(60, WORLD.h - 60); tries++; } while (h && Math.hypot(x - h.x, y - h.y) < 420 && tries < 50);
+  }
+  const e = { type, t, x, y, r: t.r, hp: t.hp * sc, maxHp: t.hp * sc, atkT: rand(0.5, 1.5), slow: 0, stun: 0, burn: 0, hitFlash: 0, state: 'move', st: 0, vx: 0, vy: 0, phase: 0, spawnT: 0.6 };
+  enemies.push(e);
+  for (let i = 0; i < 14; i++) parts.push({ x, y, vx: rand(-120, 120), vy: rand(-120, 120), life: 0.6, max: 0.6, c: t.color, s: 3 });
+  return e;
+}
+function startWave() {
+  wave++;
+  if (wave % 5 === 0) {
+    spawnEnemy('boss'); for (let i = 0; i < 3; i++) spawnEnemy('grunt');
+    banner = { txt: 'BOSS WAVE ' + wave, t: 2.4, c: '#ffd166' };
+  } else {
+    const n = 3 + wave * 2;
+    for (let i = 0; i < n; i++) {
+      const r = Math.random();
+      let type = 'grunt';
+      if (wave >= 2 && r < 0.3) type = 'shooter';
+      if (wave >= 3 && r > 0.8) type = 'caster';
+      if (wave >= 4 && r > 0.93) type = 'brute';
+      spawnEnemy(type);
+    }
+    banner = { txt: 'WAVE ' + wave, t: 1.8, c: '#e8ecff' };
+  }
+}
+
+/* ---------------- combat helpers ---------------- */
+function floatText(x, y, txt, c, s = 16) { texts.push({ x, y, txt, c, s, life: 0.9 }); }
+function burst(x, y, c, n = 10, sp = 160, s = 3) { for (let i = 0; i < n; i++) { const a = rand(0, 6.28), v = rand(sp * 0.3, sp); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rand(0.3, 0.7), max: 0.7, c, s }); } }
+
+function hurtEnemy(e, d, opts = {}) {
+  if (e.hp <= 0) return;
+  d *= dmgMul();
+  const crit = Math.random() < 0.12; if (crit) d *= 1.8;
+  e.hp -= d; e.hitFlash = 0.12;
+  floatText(e.x + rand(-8, 8), e.y - e.r, Math.round(d) + (crit ? '!' : ''), crit ? '#ffd166' : '#fff', crit ? 20 : 15);
+  if (opts.slow) e.slow = Math.max(e.slow, opts.slow);
+  if (opts.stun && e.type !== 'boss') e.stun = Math.max(e.stun, opts.stun);
+  if (opts.burn) e.burn = Math.max(e.burn, opts.burn);
+  if (opts.kb && e.type !== 'boss') { const a = opts.kbA !== undefined ? opts.kbA : ang(hero(), e); e.x += Math.cos(a) * opts.kb; e.y += Math.sin(a) * opts.kb; }
+  if (e.hp <= 0) killEnemy(e);
+}
+function killEnemy(e) {
+  kills++; score += Math.round(e.t.xp * 10 * (1 + wave * 0.1));
+  burst(e.x, e.y, e.t.color, e.type === 'boss' ? 60 : 18, e.type === 'boss' ? 400 : 220, 4);
+  shake = Math.max(shake, e.type === 'boss' ? 14 : 3);
+  gainXp(e.t.xp);
+  const r = Math.random();
+  if (e.type === 'boss' || r < 0.14) drops.push({ x: e.x, y: e.y, kind: 'hp', t: 12 });
+  else if (r < 0.28) drops.push({ x: e.x, y: e.y, kind: 'mp', t: 12 });
+}
+function gainXp(n) {
+  xp += n;
+  while (xp >= xpNext) {
+    xp -= xpNext; level++; xpNext = Math.round(xpNext * 1.35);
+    for (const p of party) { p.maxHp = Math.round(p.c.hp * (1 + (level - 1) * 0.1)); p.maxMp = Math.round(p.c.mp * (1 + (level - 1) * 0.05)); if (!p.dead) { p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.3); p.mp = p.maxMp; } }
+    banner = { txt: 'LEVEL UP!  Lv ' + level, t: 1.6, c: '#4fdc7a' };
+    const h = hero(); burst(h.x, h.y, '#4fdc7a', 40, 260, 4);
+  }
+}
+function hurtHero(d, src) {
+  const h = hero();
+  if (!h || h.dead || h.inv > 0 || state !== 'play') return;
+  d *= (1 - h.c.armor) * (1 + 0.04 * (wave - 1));
+  h.hp -= d; h.hitFlash = 0.15; h.inv = 0.25; shake = Math.max(shake, 5);
+  floatText(h.x, h.y - 26, '-' + Math.round(d), '#ff5d73', 16);
+  if (h.hp <= 0) {
+    h.hp = 0; h.dead = true; burst(h.x, h.y, h.c.color, 40, 300, 4);
+    const next = party.findIndex(p => !p.dead);
+    if (next < 0) gameOver();
+    else { switchTo(next, true); banner = { txt: h.c.name + ' has fallen!', t: 1.6, c: '#ff5d73' }; }
+  }
+}
+
+/* nearest-enemy auto-aim (great for buttons / joystick) */
+function aimTarget(h, range = 650) {
+  let best = null, bd = range;
+  for (const e of enemies) { if (e.spawnT > 0) continue; const d = dist(h, e); if (d < bd) { bd = d; best = e; } }
+  return best;
+}
+function aimAngle(h, range) { const t = aimTarget(h, range); if (t) { h.face = ang(h, t); } return h.face; }
+
+/* ---------------- abilities ---------------- */
+function useAttack(h) {
+  if (h.atkT > 0) return; h.atkT = h.c.atkCd;
+  const a = aimAngle(h, h.key === 'knight' ? 260 : 700);
+  if (h.key === 'knight') {
+    slashes.push({ x: h.x, y: h.y, a, r: 85, life: 0.18, max: 0.18, c: '#bfe0ff' });
+    for (const e of enemies) {
+      if (e.spawnT > 0) continue;
+      const d = dist(h, e); if (d > 85 + e.r) continue;
+      let da = Math.abs(((ang(h, e) - a + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+      if (da < 1.05) hurtEnemy(e, 28, { kb: 18 });
+    }
+  } else if (h.key === 'mage') {
+    projs.push({ x: h.x, y: h.y, vx: Math.cos(a) * 620, vy: Math.sin(a) * 620, r: 8, dmg: 22, team: 'p', life: 1.2, c: '#c06bff', trail: true });
+  } else {
+    projs.push({ x: h.x, y: h.y, vx: Math.cos(a) * 920, vy: Math.sin(a) * 920, r: 5, dmg: 17, team: 'p', life: 0.9, c: '#9dffb8', arrow: true });
+  }
+}
+function useSkill(h, which) {
+  const s = h.c[which];
+  if (h.cd[which] > 0) return;
+  if (h.mp < s.mp) { floatText(h.x, h.y - 30, 'No mana', '#4da3ff', 14); return; }
+  h.mp -= s.mp; h.cd[which] = s.cd;
+  const a = aimAngle(h, 700);
+  const tgt = aimTarget(h, 600);
+  if (h.key === 'knight') {
+    if (which === 's1') { h.spinT = 0.9; h.spinTick = 0; }
+    else {
+      shake = 12; zones.push({ x: h.x, y: h.y, r: 230, kind: 'quake', t: 0, dur: 0.5 });
+      for (const e of enemies) if (dist(h, e) < 230 + e.r) hurtEnemy(e, 55, { stun: 2, kb: 40 });
+      burst(h.x, h.y, '#c9a26b', 50, 350, 5);
+    }
+  } else if (h.key === 'mage') {
+    if (which === 's1') {
+      zones.push({ x: h.x, y: h.y, r: 190, kind: 'nova', t: 0, dur: 0.45 });
+      for (const e of enemies) if (dist(h, e) < 190 + e.r) hurtEnemy(e, 32, { slow: 3, stun: 0.6 });
+      burst(h.x, h.y, '#9be7ff', 40, 300, 4);
+    } else {
+      const tx = tgt ? tgt.x : h.x + Math.cos(a) * 260, ty = tgt ? tgt.y : h.y + Math.sin(a) * 260;
+      zones.push({ x: tx, y: ty, r: 170, kind: 'meteor', t: 0, delay: 0.85, dur: 1.4, done: false, team: 'p' });
+    }
+  } else {
+    if (which === 's1') {
+      for (let i = -3; i <= 3; i++) { const aa = a + i * 0.13; projs.push({ x: h.x, y: h.y, vx: Math.cos(aa) * 900, vy: Math.sin(aa) * 900, r: 5, dmg: 20, team: 'p', life: 0.8, c: '#ffe08a', arrow: true, pierce: 1 }); }
+    } else {
+      const tx = tgt ? tgt.x : h.x + Math.cos(a) * 240, ty = tgt ? tgt.y : h.y + Math.sin(a) * 240;
+      zones.push({ x: tx, y: ty, r: 160, kind: 'rain', t: 0, dur: 3.2, tick: 0, team: 'p' });
+    }
+  }
+}
+function useDash(h, inp) {
+  if (h.cd.dash > 0) return; h.cd.dash = h.c.dash.cd;
+  let a = (inp.mx || inp.my) ? Math.atan2(inp.my, inp.mx) : h.face;
+  if (h.key === 'mage') {
+    burst(h.x, h.y, '#c06bff', 20, 200);
+    h.x = clamp(h.x + Math.cos(a) * 230, 30, WORLD.w - 30); h.y = clamp(h.y + Math.sin(a) * 230, 30, WORLD.h - 30);
+    h.inv = 0.3; burst(h.x, h.y, '#c06bff', 20, 200);
+  } else {
+    const sp = h.key === 'knight' ? 900 : 760;
+    h.dashT = h.key === 'knight' ? 0.28 : 0.3; h.dvx = Math.cos(a) * sp; h.dvy = Math.sin(a) * sp;
+    h.inv = h.dashT + 0.1; h.dashHit = new Set();
+  }
+}
+function switchTo(i, forced) {
+  if (i === active || party[i].dead) return;
+  const old = hero(), nw = party[i];
+  nw.x = old.x; nw.y = old.y; nw.face = old.face; nw.inv = 0.6; nw.dashT = 0; nw.spinT = 0;
+  active = i; if (!forced) swapCd = 2.5;
+  burst(nw.x, nw.y, nw.c.color, 30, 240, 4);
+  floatText(nw.x, nw.y - 34, nw.c.name, nw.c.color, 18);
+  updateTouchIcons();
+}
+function swapNext() {
+  if (swapCd > 0) return;
+  for (let k = 1; k <= 2; k++) { const i = (active + k) % 3; if (!party[i].dead) { switchTo(i); return; } }
+}
+
+/* =========================================================
+   UPDATE
+   ========================================================= */
+function update(dt) {
+  time += dt;
+  const inp = readInput();
+
+  // menu control by any input source (so the Arduino works in menus too)
+  if (state === 'title') {
+    if (inp.pressed.left) cycleStart(-1); if (inp.pressed.right) cycleStart(1);
+    if (inp.pressed.attack) newGame(); return;
+  }
+  if (state === 'over') { if (inp.pressed.attack) newGame(); return; }
+  if (state === 'pause') { if (inp.pressed.pause || inp.pressed.attack) resume(); return; }
+  if (inp.pressed.pause) { pause(); return; }
+
+  const h = hero();
+  // timers
+  for (const p of party) {
+    p.atkT -= dt; p.inv -= dt; p.hitFlash -= dt;
+    for (const k in p.cd) p.cd[k] = Math.max(0, p.cd[k] - dt);
+    if (!p.dead) {
+      p.mp = Math.min(p.maxMp, p.mp + p.c.mpRegen * dt);
+      if (p !== h) p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.03 * dt); // resting heroes heal
+    }
+  }
+  swapCd = Math.max(0, swapCd - dt);
+
+  // movement
+  if (h.dashT > 0) {
+    h.dashT -= dt; h.x += h.dvx * dt; h.y += h.dvy * dt;
+    if (h.key === 'knight') for (const e of enemies) if (!h.dashHit.has(e) && dist(h, e) < h.r + e.r + 6) { h.dashHit.add(e); hurtEnemy(e, 30, { stun: 0.8, kb: 50, kbA: Math.atan2(h.dvy, h.dvx) }); }
+    if (Math.random() < 0.8) parts.push({ x: h.x, y: h.y, vx: 0, vy: 0, life: 0.25, max: 0.25, c: h.c.color, s: 6 });
+  } else {
+    const sp = h.c.speed * (h.spinT > 0 ? 0.75 : 1);
+    h.x += inp.mx * sp * dt; h.y += inp.my * sp * dt;
+    if (inp.mx || inp.my) { h.face = Math.atan2(inp.my, inp.mx); h.walk += dt * 10; }
+  }
+  h.x = clamp(h.x, h.r, WORLD.w - h.r); h.y = clamp(h.y, h.r, WORLD.h - h.r);
+
+  // actions
+  if (inp.attack) useAttack(h);
+  if (inp.pressed.s1) useSkill(h, 's1');
+  if (inp.pressed.s2) useSkill(h, 's2');
+  if (inp.pressed.dash) useDash(h, inp);
+  if (inp.pressed.swap) swapNext();
+
+  // whirlwind
+  if (h.spinT > 0) {
+    h.spinT -= dt; h.spinTick -= dt;
+    if (h.spinTick <= 0) {
+      h.spinTick = 0.15;
+      for (const e of enemies) if (dist(h, e) < 115 + e.r) hurtEnemy(e, 13, { kb: 10 });
+    }
+  }
+
+  // waves
+  if (enemies.length === 0) {
+    waveTimer -= dt;
+    if (waveTimer <= 0) { startWave(); waveTimer = 2.2; }
+  }
+
+  updateEnemies(dt, h);
+  updateProjs(dt, h);
+  updateZones(dt, h);
+
+  // drops
+  for (const d of drops) {
+    d.t -= dt;
+    if (dist(d, h) < 30) {
+      d.t = -1;
+      if (d.kind === 'hp') { const v = h.maxHp * 0.35; h.hp = Math.min(h.maxHp, h.hp + v); floatText(h.x, h.y - 30, '+' + Math.round(v) + ' HP', '#4fdc7a'); }
+      else { h.mp = h.maxMp; floatText(h.x, h.y - 30, 'MANA FULL', '#4da3ff'); }
+      burst(h.x, h.y, d.kind === 'hp' ? '#4fdc7a' : '#4da3ff', 14, 160);
+    }
+  }
+  drops = drops.filter(d => d.t > 0);
+
+  // fx
+  for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.92; p.vy *= 0.92; p.life -= dt; }
+  parts = parts.filter(p => p.life > 0);
+  if (parts.length > 700) parts.splice(0, parts.length - 700);
+  for (const t of texts) { t.y -= 40 * dt; t.life -= dt; }
+  texts = texts.filter(t => t.life > 0);
+  for (const s of slashes) s.life -= dt; slashes = slashes.filter(s => s.life > 0);
+  shake = Math.max(0, shake - dt * 30);
+  if (banner) { banner.t -= dt; if (banner.t <= 0) banner = null; }
+
+  // hardware watchdog: no message for 2 s while connected -> release buttons
+  if (hwConnected && performance.now() - lastHw > 2000) for (const k of KEYS) hw[k] = false;
+
+  updateTouchCooldowns(h);
+}
+
+function updateEnemies(dt, h) {
+  for (const e of enemies) {
+    e.hitFlash -= dt;
+    if (e.spawnT > 0) { e.spawnT -= dt; continue; }
+    if (e.burn > 0) { e.burn -= dt; e.burnTick = (e.burnTick || 0) - dt; if (e.burnTick <= 0) { e.burnTick = 0.5; hurtEnemy(e, 6); } }
+    if (e.hp <= 0) continue;
+    if (e.stun > 0) { e.stun -= dt; continue; }
+    e.slow = Math.max(0, e.slow - dt);
+    const sp = e.t.speed * (e.slow > 0 ? 0.45 : 1);
+    const d = dist(e, h), a = ang(e, h);
+    e.atkT -= dt;
+    let mvx = 0, mvy = 0;
+
+    if (e.type === 'grunt') {
+      if (d > e.r + h.r + 4) { mvx = Math.cos(a); mvy = Math.sin(a); }
+      else if (e.atkT <= 0) { e.atkT = 1; hurtHero(e.t.dmg); }
+    } else if (e.type === 'shooter') {
+      if (d > 360) { mvx = Math.cos(a); mvy = Math.sin(a); } else if (d < 240) { mvx = -Math.cos(a); mvy = -Math.sin(a); }
+      else { mvx = Math.cos(a + 1.57) * 0.6; mvy = Math.sin(a + 1.57) * 0.6; }
+      if (e.atkT <= 0 && d < 520) { e.atkT = 1.7; projs.push({ x: e.x, y: e.y, vx: Math.cos(a) * 330, vy: Math.sin(a) * 330, r: 7, dmg: e.t.dmg, team: 'e', life: 2.2, c: '#ff9f43' }); }
+    } else if (e.type === 'caster') {
+      if (d > 420) { mvx = Math.cos(a); mvy = Math.sin(a); } else if (d < 260) { mvx = -Math.cos(a); mvy = -Math.sin(a); }
+      if (e.atkT <= 0 && d < 560) { e.atkT = 3.4; zones.push({ x: h.x, y: h.y, r: 75, kind: 'curse', t: 0, delay: 1.0, dur: 1.3, team: 'e', dmg: e.t.dmg, done: false }); }
+    } else if (e.type === 'brute') {
+      if (e.state === 'move') {
+        mvx = Math.cos(a); mvy = Math.sin(a);
+        if (d < e.r + h.r + 6 && e.atkT <= 0) { e.atkT = 1.3; hurtHero(e.t.dmg); }
+        if (d < 380 && d > 120 && e.atkT <= 0) { e.state = 'wind'; e.st = 0.7; e.ca = a; }
+      } else if (e.state === 'wind') { e.st -= dt; if (e.st <= 0) { e.state = 'charge'; e.st = 0.55; } }
+      else if (e.state === 'charge') {
+        e.st -= dt; e.x += Math.cos(e.ca) * 620 * dt; e.y += Math.sin(e.ca) * 620 * dt;
+        if (d < e.r + h.r) { hurtHero(e.t.dmg); e.st = 0; }
+        if (e.st <= 0) { e.state = 'move'; e.atkT = 1.8; }
+      }
+    } else if (e.type === 'boss') {
+      e.phase += dt;
+      if (d > 160) { mvx = Math.cos(a); mvy = Math.sin(a); }
+      if (d < e.r + h.r + 8 && e.atkT <= 0) { e.atkT = 1; hurtHero(e.t.dmg); }
+      e.st -= dt;
+      if (e.st <= 0) {
+        const pick = Math.floor(Math.random() * 3), enraged = e.hp < e.maxHp * 0.5;
+        if (pick === 0) { // bullet ring
+          const n = enraged ? 22 : 16; for (let i = 0; i < n; i++) { const aa = i / n * 6.283 + e.phase; projs.push({ x: e.x, y: e.y, vx: Math.cos(aa) * 260, vy: Math.sin(aa) * 260, r: 8, dmg: 14, team: 'e', life: 3, c: '#ffd166' }); }
+        } else if (pick === 1) { // slam zones around the hero
+          for (let i = 0; i < (enraged ? 4 : 3); i++) zones.push({ x: h.x + rand(-120, 120), y: h.y + rand(-120, 120), r: 90, kind: 'curse', t: 0, delay: 1.0, dur: 1.3, team: 'e', dmg: 28, done: false });
+        } else { // summon
+          for (let i = 0; i < 3; i++) spawnEnemy('grunt', e.x + rand(-90, 90), e.y + rand(-90, 90));
+        }
+        e.st = enraged ? 2.2 : 3.2;
+      }
+    }
+    e.x += mvx * sp * dt; e.y += mvy * sp * dt;
+  }
+  // separation
+  for (let i = 0; i < enemies.length; i++) for (let j = i + 1; j < enemies.length; j++) {
+    const a = enemies[i], b = enemies[j], dx = b.x - a.x, dy = b.y - a.y, m = Math.hypot(dx, dy) || 1, o = a.r + b.r - m;
+    if (o > 0) { const px = dx / m * o / 2, py = dy / m * o / 2; a.x -= px; a.y -= py; b.x += px; b.y += py; }
+  }
+  for (const e of enemies) { e.x = clamp(e.x, e.r, WORLD.w - e.r); e.y = clamp(e.y, e.r, WORLD.h - e.r); }
+  enemies = enemies.filter(e => e.hp > 0);
+}
+
+function updateProjs(dt, h) {
+  for (const p of projs) {
+    p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+    if (p.trail && Math.random() < 0.7) parts.push({ x: p.x, y: p.y, vx: rand(-20, 20), vy: rand(-20, 20), life: 0.3, max: 0.3, c: p.c, s: 4 });
+    if (p.x < 0 || p.y < 0 || p.x > WORLD.w || p.y > WORLD.h) p.life = 0;
+    if (p.team === 'p') {
+      for (const e of enemies) {
+        if (e.spawnT > 0 || e.hp <= 0 || (p.hit && p.hit.has(e))) continue;
+        if (Math.hypot(p.x - e.x, p.y - e.y) < p.r + e.r) {
+          hurtEnemy(e, p.dmg, { kb: 8, kbA: Math.atan2(p.vy, p.vx) });
+          burst(p.x, p.y, p.c, 6, 120);
+          if (p.pierce) { p.pierce--; (p.hit = p.hit || new Set()).add(e); } else { p.life = 0; break; }
+        }
+      }
+    } else if (Math.hypot(p.x - h.x, p.y - h.y) < p.r + h.r) { hurtHero(p.dmg); p.life = 0; burst(p.x, p.y, p.c, 6, 120); }
+  }
+  projs = projs.filter(p => p.life > 0);
+}
+
+function updateZones(dt, h) {
+  for (const z of zones) {
+    z.t += dt;
+    if (z.kind === 'meteor' && !z.done && z.t >= z.delay) {
+      z.done = true; shake = 14;
+      for (const e of enemies) if (Math.hypot(e.x - z.x, e.y - z.y) < z.r + e.r) hurtEnemy(e, 120, { burn: 3, kb: 50, kbA: Math.atan2(e.y - z.y, e.x - z.x) });
+      burst(z.x, z.y, '#ff8a3d', 70, 420, 5); burst(z.x, z.y, '#ffd166', 40, 260, 4);
+    }
+    if (z.kind === 'curse' && !z.done && z.t >= z.delay) {
+      z.done = true; burst(z.x, z.y, '#f368e0', 30, 220, 4);
+      if (Math.hypot(h.x - z.x, h.y - z.y) < z.r + h.r) hurtHero(z.dmg);
+    }
+    if (z.kind === 'rain') {
+      z.tick -= dt;
+      if (Math.random() < 0.9) parts.push({ x: z.x + rand(-z.r, z.r) * 0.8, y: z.y + rand(-z.r, z.r) * 0.8 - 40, vx: 0, vy: 500, life: 0.08, max: 0.08, c: '#ffe08a', s: 3 });
+      if (z.tick <= 0) { z.tick = 0.25; for (const e of enemies) if (Math.hypot(e.x - z.x, e.y - z.y) < z.r + e.r) hurtEnemy(e, 11, { slow: 0.5 }); }
+    }
+  }
+  zones = zones.filter(z => z.t < z.dur);
+}
+
+/* =========================================================
+   DRAW
+   ========================================================= */
+function draw() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#0b0d17'; ctx.fillRect(0, 0, VW, VH);
+  const h = hero();
+  const vw = VW / ZOOM, vh = VH / ZOOM;
+  if (h) {
+    cam.x += (clamp(h.x - vw / 2, -60, WORLD.w - vw + 60) - cam.x) * 0.15;
+    cam.y += (clamp(h.y - vh / 2, -60, WORLD.h - vh + 60) - cam.y) * 0.15;
+  } else { cam.x = WORLD.w / 2 - vw / 2 + Math.sin(time * 0.2) * 200; cam.y = WORLD.h / 2 - vh / 2; }
+  const sx = rand(-shake, shake), sy = rand(-shake, shake);
+  ctx.save();
+  ctx.scale(ZOOM, ZOOM); ctx.translate(-cam.x + sx, -cam.y + sy);
+
+  drawArena();
+  // zones (under)
+  for (const z of zones) drawZone(z);
+  // drops
+  for (const d of drops) {
+    const b = Math.sin(time * 5) * 3, blink = d.t < 3 && Math.sin(time * 20) > 0;
+    if (blink) continue;
+    ctx.fillStyle = d.kind === 'hp' ? '#4fdc7a' : '#4da3ff';
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.arc(d.x, d.y + b, 9, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(d.kind === 'hp' ? '+' : 'M', d.x, d.y + b + 4);
+  }
+  for (const e of enemies) drawEnemy(e);
+  if (h && state !== 'title') drawHero(h);
+  for (const s of slashes) {
+    const k = s.life / s.max;
+    ctx.strokeStyle = `rgba(200,230,255,${k})`; ctx.lineWidth = 10 * k + 2;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 0.75, s.a - 1.05, s.a + 1.05); ctx.stroke();
+  }
+  for (const p of projs) drawProj(p);
+  for (const p of parts) { ctx.globalAlpha = Math.max(0, p.life / p.max); ctx.fillStyle = p.c; ctx.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s); }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'center';
+  for (const t of texts) { ctx.globalAlpha = Math.min(1, t.life * 2); ctx.font = `bold ${t.s}px sans-serif`; ctx.fillStyle = '#000'; ctx.fillText(t.txt, t.x + 1, t.y + 1); ctx.fillStyle = t.c; ctx.fillText(t.txt, t.x, t.y); }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  if (state !== 'title') drawHUD();
+}
+
+function drawArena() {
+  ctx.fillStyle = '#121528'; ctx.fillRect(0, 0, WORLD.w, WORLD.h);
+  ctx.strokeStyle = 'rgba(80,95,160,.12)'; ctx.lineWidth = 1;
+  for (let x = 0; x <= WORLD.w; x += 80) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, WORLD.h); ctx.stroke(); }
+  for (let y = 0; y <= WORLD.h; y += 80) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WORLD.w, y); ctx.stroke(); }
+  // rune circle in the middle
+  ctx.strokeStyle = 'rgba(192,107,255,.18)'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(WORLD.w / 2, WORLD.h / 2, 260, 0, 6.28); ctx.stroke();
+  ctx.beginPath(); ctx.arc(WORLD.w / 2, WORLD.h / 2, 200, 0, 6.28); ctx.stroke();
+  for (let i = 0; i < 6; i++) { const a = i / 6 * 6.28 + time * 0.1; ctx.beginPath(); ctx.moveTo(WORLD.w / 2 + Math.cos(a) * 200, WORLD.h / 2 + Math.sin(a) * 200); ctx.lineTo(WORLD.w / 2 + Math.cos(a + 2.09) * 200, WORLD.h / 2 + Math.sin(a + 2.09) * 200); ctx.stroke(); }
+  ctx.strokeStyle = '#3a4380'; ctx.lineWidth = 8; ctx.strokeRect(0, 0, WORLD.w, WORLD.h);
+  // pillars in corners
+  ctx.fillStyle = '#1e2342';
+  for (const [x, y] of [[120, 120], [WORLD.w - 120, 120], [120, WORLD.h - 120], [WORLD.w - 120, WORLD.h - 120]]) { ctx.beginPath(); ctx.arc(x, y, 40, 0, 6.28); ctx.fill(); }
+}
+
+function drawZone(z) {
+  const k = z.t / z.dur;
+  if (z.kind === 'nova') { ctx.strokeStyle = `rgba(155,231,255,${1 - k})`; ctx.lineWidth = 14; ctx.beginPath(); ctx.arc(z.x, z.y, z.r * Math.min(1, z.t / 0.2), 0, 6.28); ctx.stroke(); }
+  else if (z.kind === 'quake') { ctx.strokeStyle = `rgba(201,162,107,${1 - k})`; ctx.lineWidth = 18; ctx.beginPath(); ctx.arc(z.x, z.y, z.r * Math.min(1, z.t / 0.25), 0, 6.28); ctx.stroke(); }
+  else if (z.kind === 'meteor' || z.kind === 'curse') {
+    const col = z.kind === 'meteor' ? '255,138,61' : '243,104,224';
+    if (!z.done) {
+      const p = z.t / z.delay;
+      ctx.fillStyle = `rgba(${col},.12)`; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, 6.28); ctx.fill();
+      ctx.fillStyle = `rgba(${col},.3)`; ctx.beginPath(); ctx.arc(z.x, z.y, z.r * p, 0, 6.28); ctx.fill();
+      ctx.strokeStyle = `rgba(${col},.9)`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, 6.28); ctx.stroke();
+      if (z.kind === 'meteor') { const fy = z.y - 600 * (1 - p); ctx.fillStyle = '#ffb347'; ctx.shadowColor = '#ff8a3d'; ctx.shadowBlur = 25; ctx.beginPath(); ctx.arc(z.x + 300 * (1 - p), fy, 22, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0; }
+    } else {
+      const f = (z.t - z.delay) / (z.dur - z.delay);
+      ctx.fillStyle = `rgba(${col},${0.4 * (1 - f)})`; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, 6.28); ctx.fill();
+    }
+  } else if (z.kind === 'rain') {
+    ctx.fillStyle = `rgba(255,224,138,${0.12 * (1 - k * 0.5)})`; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, 6.28); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,224,138,.5)'; ctx.lineWidth = 2; ctx.setLineDash([8, 8]); ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, 6.28); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+function drawHero(h) {
+  const blink = h.inv > 0 && h.dashT <= 0 && Math.sin(time * 40) > 0;
+  ctx.save(); ctx.translate(h.x, h.y);
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(0, h.r * 0.9, h.r, h.r * 0.4, 0, 0, 6.28); ctx.fill();
+  if (h.spinT > 0) { ctx.strokeStyle = 'rgba(190,225,255,.7)'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(0, 0, 105, time * 20, time * 20 + 4); ctx.stroke(); }
+  ctx.globalAlpha = blink ? 0.4 : 1;
+  const bob = Math.sin(h.walk) * 2;
+  ctx.fillStyle = h.hitFlash > 0 ? '#fff' : h.c.color; ctx.shadowColor = h.c.color; ctx.shadowBlur = 14;
+  ctx.beginPath(); ctx.arc(0, bob, h.r, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0;
+  // face direction / weapon
+  ctx.rotate(h.face);
+  if (h.key === 'knight') { ctx.fillStyle = '#dfe9ff'; ctx.fillRect(h.r - 4, -3, 26, 6); ctx.fillStyle = '#8a6d3b'; ctx.fillRect(h.r - 8, -7, 5, 14); }
+  else if (h.key === 'mage') { ctx.strokeStyle = '#8a6d3b'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(h.r - 6, 8); ctx.lineTo(h.r + 18, -6); ctx.stroke(); ctx.fillStyle = '#e6b3ff'; ctx.shadowColor = '#c06bff'; ctx.shadowBlur = 12; ctx.beginPath(); ctx.arc(h.r + 20, -7, 6, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0; }
+  else { ctx.strokeStyle = '#c8a46b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(h.r - 2, 0, 16, -1.2, 1.2); ctx.stroke(); }
+  ctx.fillStyle = '#0b0d17'; ctx.beginPath(); ctx.arc(7, -6, 3, 0, 6.28); ctx.arc(7, 6, 3, 0, 6.28); ctx.fill();
+  ctx.restore();
+}
+
+function drawEnemy(e) {
+  ctx.save(); ctx.translate(e.x, e.y);
+  if (e.spawnT > 0) ctx.globalAlpha = 1 - e.spawnT / 0.6;
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(0, e.r * 0.9, e.r, e.r * 0.4, 0, 0, 6.28); ctx.fill();
+  const col = e.hitFlash > 0 ? '#fff' : e.slow > 0 ? '#9be7ff' : e.t.color;
+  ctx.fillStyle = col;
+  if (e.state === 'wind') { ctx.strokeStyle = '#ff5d73'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(e.ca) * 380, Math.sin(e.ca) * 380); ctx.stroke(); }
+  // bot body: square-ish robot
+  const r = e.r;
+  ctx.beginPath();
+  if (e.type === 'shooter') { ctx.moveTo(0, -r); ctx.lineTo(r, r * 0.8); ctx.lineTo(-r, r * 0.8); ctx.closePath(); }
+  else if (e.type === 'caster') { for (let i = 0; i < 6; i++) { const a = i / 6 * 6.28 + time; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); }
+  else ctx.roundRect ? ctx.roundRect(-r, -r, r * 2, r * 2, r * 0.35) : ctx.rect(-r, -r, r * 2, r * 2);
+  ctx.fill();
+  // eye
+  const h = hero(); const a = h ? ang(e, h) : 0;
+  ctx.fillStyle = e.type === 'boss' ? '#ff2d55' : '#111';
+  ctx.beginPath(); ctx.arc(Math.cos(a) * r * 0.4, Math.sin(a) * r * 0.4, r * 0.28, 0, 6.28); ctx.fill();
+  ctx.fillStyle = '#ff2d55'; ctx.beginPath(); ctx.arc(Math.cos(a) * r * 0.48, Math.sin(a) * r * 0.48, r * 0.12, 0, 6.28); ctx.fill();
+  if (e.stun > 0) { ctx.fillStyle = '#ffd166'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✦✦', 0, -r - 14); }
+  if (e.burn > 0 && Math.random() < 0.3) parts.push({ x: e.x + rand(-r, r), y: e.y + rand(-r, r), vx: 0, vy: -60, life: 0.4, max: 0.4, c: '#ff8a3d', s: 4 });
+  ctx.globalAlpha = 1;
+  // hp bar
+  if (e.hp < e.maxHp) {
+    const w = e.type === 'boss' ? 120 : r * 2.2;
+    ctx.fillStyle = '#000a'; ctx.fillRect(-w / 2, -r - 10, w, 5);
+    ctx.fillStyle = '#ff5d73'; ctx.fillRect(-w / 2, -r - 10, w * e.hp / e.maxHp, 5);
+  }
+  ctx.restore();
+}
+
+function drawProj(p) {
+  ctx.save(); ctx.translate(p.x, p.y);
+  if (p.arrow) { ctx.rotate(Math.atan2(p.vy, p.vx)); ctx.strokeStyle = p.c; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(6, 0); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(3, -4); ctx.lineTo(3, 4); ctx.fill(); }
+  else { ctx.fillStyle = p.c; ctx.shadowColor = p.c; ctx.shadowBlur = 14; ctx.beginPath(); ctx.arc(0, 0, p.r, 0, 6.28); ctx.fill(); }
+  ctx.restore();
+}
+
+function bar(x, y, w, hh, v, max, c) { ctx.fillStyle = '#000a'; ctx.fillRect(x, y, w, hh); ctx.fillStyle = c; ctx.fillRect(x, y, w * clamp(v / max, 0, 1), hh); ctx.strokeStyle = '#ffffff22'; ctx.strokeRect(x, y, w, hh); }
+
+function drawHUD() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const h = hero(); const s = Math.max(0.75, Math.min(1.1, VH / 600));
+  ctx.save(); ctx.scale(s, s);
+  // party panel
+  let y = 10;
+  party.forEach((p, i) => {
+    const act = i === active;
+    ctx.fillStyle = act ? 'rgba(40,48,95,.9)' : 'rgba(14,18,34,.75)'; ctx.fillRect(10, y, 200, act ? 50 : 34);
+    ctx.strokeStyle = act ? p.c.color : '#2b3358'; ctx.lineWidth = act ? 2 : 1; ctx.strokeRect(10, y, 200, act ? 50 : 34);
+    ctx.font = '18px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(p.c.icon, 16, y + 23);
+    ctx.font = 'bold 12px sans-serif'; ctx.fillStyle = p.dead ? '#666' : p.c.color; ctx.fillText(p.c.name + (p.dead ? ' ✝' : ''), 42, y + 14);
+    bar(42, y + 19, 160, 7, p.hp, p.maxHp, '#ff5d73');
+    if (act) { bar(42, y + 30, 160, 6, p.mp, p.maxMp, '#4da3ff'); ctx.fillStyle = '#ccd'; ctx.font = '10px sans-serif'; ctx.fillText(Math.ceil(p.hp) + '/' + p.maxHp + '  ·  MP ' + Math.floor(p.mp), 44, y + 46); }
+    y += (act ? 50 : 34) + 4;
+  });
+  ctx.fillStyle = '#8d96c4'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(swapCd > 0 ? 'Swap ready in ' + swapCd.toFixed(1) + 's' : 'Swap ready 🔄', 12, y + 10);
+
+  // skills strip top-right
+  const vw = VW / s;
+  const sk = [['atk', '⚔️', h.atkT > 0 ? h.atkT / h.c.atkCd : 0, 'Attack'], ['s1', h.c.s1.icon, h.cd.s1 / h.c.s1.cd, h.c.s1.name + ' ' + h.c.s1.mp], ['s2', h.c.s2.icon, h.cd.s2 / h.c.s2.cd, h.c.s2.name + ' ' + h.c.s2.mp], ['dash', '💨', h.cd.dash / h.c.dash.cd, h.c.dash.name]];
+  const showStrip = !(PLATFORM === 'mobile' && !hwConnected);
+  const sx0 = vw - sk.length * 66 - (PLATFORM === 'mobile' && !hwConnected ? 60 : 10);
+  if (showStrip) sk.forEach((k, i) => {
+    const x = sx0 + i * 66, yy = 10;
+    ctx.fillStyle = 'rgba(14,18,34,.85)'; ctx.fillRect(x, yy, 60, 60); ctx.strokeStyle = '#2b3358'; ctx.strokeRect(x, yy, 60, 60);
+    ctx.font = '26px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(k[1], x + 30, yy + 36);
+    if (k[2] > 0) { ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(x, yy + 60 * (1 - k[2]), 60, 60 * k[2]); }
+    ctx.font = '9px sans-serif'; ctx.fillStyle = '#aab'; ctx.fillText(k[3], x + 30, yy + 54);
+  });
+
+  // wave / score / level
+  ctx.textAlign = 'center'; ctx.font = 'bold 15px sans-serif'; ctx.fillStyle = '#e8ecff';
+  const cx = vw / 2, ty = 62 / s;
+  ctx.fillText(`Wave ${wave}  ·  Lv ${level}  ·  ${score} pts`, cx, ty);
+  bar(cx - 100, ty + 6, 200, 5, xp, xpNext, '#4fdc7a');
+  ctx.font = '11px sans-serif'; ctx.fillStyle = '#8d96c4'; ctx.fillText(`Bots left: ${enemies.length}`, cx, ty + 26);
+  // boss bar
+  const boss = enemies.find(e => e.type === 'boss');
+  if (boss) { ctx.fillStyle = '#ffd166'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('OVERLORD BOT', cx, ty + 44); bar(cx - 180, ty + 49, 360, 10, boss.hp, boss.maxHp, '#ffd166'); }
+  if (banner) {
+    ctx.globalAlpha = Math.min(1, banner.t * 2); ctx.font = 'bold 40px sans-serif'; ctx.fillStyle = '#000';
+    const by = VH / s * 0.38; ctx.fillText(banner.txt, cx + 2, by + 2); ctx.fillStyle = banner.c; ctx.fillText(banner.txt, cx, by); ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+/* ---------------- touch button icons / cooldowns ---------------- */
+function updateTouchIcons() { const h = hero(); if (!h) return; document.getElementById('icoS1').textContent = h.c.s1.icon; document.getElementById('icoS2').textContent = h.c.s2.icon; }
+const cdEls = { bS1: 's1', bS2: 's2', bDash: 'dash' };
+function updateTouchCooldowns(h) {
+  if (PLATFORM !== 'mobile' || hwConnected) return;
+  for (const id in cdEls) { const k = cdEls[id], max = k === 'dash' ? h.c.dash.cd : h.c[k].cd; document.querySelector('#' + id + ' .cd').style.height = (h.cd[k] / max * 100) + '%'; }
+  document.querySelector('#bAtk .cd').style.height = Math.max(0, h.atkT / h.c.atkCd * 100) + '%';
+}
+
+/* =========================================================
+   MENUS
+   ========================================================= */
+function showOv(id) { document.getElementById(id).classList.remove('hidden'); }
+function hideOv(id) { document.getElementById(id).classList.add('hidden'); }
+function pause() { state = 'pause'; showOv('ovPause'); }
+function resume() { state = 'play'; hideOv('ovPause'); }
+function gameOver() {
+  state = 'over';
+  document.getElementById('overStats').innerHTML = `Reached <b>wave ${wave}</b> · Level ${level} · ${kills} bots destroyed<br><b style="font-size:22px;color:#ffd166">${score} points</b>`;
+  let best = 0; try { best = +localStorage.getItem('aa_best') || 0; if (score > best) { localStorage.setItem('aa_best', score); best = score; } } catch (e) { }
+  document.getElementById('overStats').innerHTML += `<br>Best: ${best}`;
+  showOv('ovOver');
+}
+function renderParty() {
+  document.getElementById('partyCards').innerHTML = ORDER.map(k => { const c = CLASSES[k]; return `<div class="pc ${k === startChar ? 'sel' : ''}" data-k="${k}"><h3 style="color:${c.color}">${c.icon} ${c.name}</h3><p>HP ${c.hp} · MP ${c.mp} · Speed ${c.speed}</p><p>${c.s1.icon} ${c.s1.name} · ${c.s2.icon} ${c.s2.name} · 💨 ${c.dash.name}</p><p>${c.desc}</p></div>`; }).join('');
+  document.querySelectorAll('.pc').forEach(el => el.onclick = () => { startChar = el.dataset.k; renderParty(); });
+}
+function cycleStart(d) { const i = (ORDER.indexOf(startChar) + d + 3) % 3; startChar = ORDER[i]; renderParty(); }
+document.getElementById('playBtn').onclick = () => { newGame(); updateTouchIcons(); };
+document.getElementById('againBtn').onclick = () => { newGame(); updateTouchIcons(); };
+document.getElementById('resumeBtn').onclick = resume;
+document.getElementById('quitBtn').onclick = () => { hideOv('ovPause'); state = 'title'; party = []; enemies = []; projs = []; zones = []; showOv('ovTitle'); };
+document.getElementById('titleHint').innerHTML = PLATFORM === 'pc'
+  ? 'Keyboard: <kbd>WASD</kbd>/<kbd>Arrows</kbd> move · <kbd>J</kbd> attack · <kbd>K</kbd> skill 1 · <kbd>L</kbd> skill 2 · <kbd>Space</kbd> dash · <kbd>Q</kbd> swap · <kbd>P</kbd> pause<br>Arduino over USB: click <b>🔌 Connect Arduino</b> (Chrome or Edge) and pick the Arduino port. Hold <b>ATTACK</b> to keep attacking.'
+  : 'Left side: joystick · Right side: ⚔️ attack (hold), skills, 💨 dash, 🔄 swap.<br>Arduino: tap <b>🔌 Connect Arduino</b> → choose your HC-05. Touch controls disappear and a button guide appears at the bottom.<br>Title screen with Arduino: ◀ ▶ choose hero · ATTACK = play';
+renderParty();
+setHwConnected(false);
+
+/* =========================================================
+   LOOP
+   ========================================================= */
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  try { update(dt); draw(); } catch (e) { console.error(e); }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* toast */
+function toast(msg, c) { const el = document.createElement('div'); el.textContent = msg; el.style.cssText = `position:fixed;top:56px;left:50%;transform:translateX(-50%);background:#0e1222f0;border:1px solid ${c};color:${c};padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;z-index:50;transition:opacity .4s`; document.body.appendChild(el); setTimeout(() => el.style.opacity = '0', 2200); setTimeout(() => el.remove(), 2700); }
+
+// for automated tests
+window.__game = { get state() { return state; }, get party() { return party; }, get enemies() { return enemies; }, get wave() { return wave; }, hwData, setHwConnected, newGame };
+</script>
+</body>
+</html>
